@@ -122,6 +122,7 @@ h1 .line2{color:var(--accent);display:block}
 }
 .body-instruction{font-size:13px;color:var(--muted);margin-bottom:1.5rem;text-align:center}
 .body-svg-wrap{position:relative;width:220px}
+.body-svg-wrap:hover svg{animation:breathe 2s ease-in-out infinite}
 .body-svg-wrap svg{width:100%;height:auto}
 .body-region{
   fill:url(#muscle3D);stroke:rgba(255,255,255,0.2);stroke-width:1;
@@ -144,6 +145,10 @@ h1 .line2{color:var(--accent);display:block}
   0%{filter:url(#muscleGlow) drop-shadow(0 0 0 rgba(0,212,170,0))}
   50%{filter:url(#muscleGlow) drop-shadow(0 0 14px rgba(0,212,170,0.8))}
   100%{filter:url(#muscleGlow) drop-shadow(0 0 6px rgba(0,212,170,0.4))}
+}
+@keyframes breathe{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.03)}
 }
 .body-proceed-btn{
   margin-top:1.5rem;padding:11px 26px;border-radius:30px;
@@ -497,9 +502,9 @@ h1 .line2{color:var(--accent);display:block}
       <svg id="bodySVG" viewBox="0 0 200 480" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="muscle3D" cx="30%" cy="30%" r="70%">
-            <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.15" />
-            <stop offset="70%" style="stop-color:#ffffff;stop-opacity:0.05" />
-            <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.01" />
+            <stop offset="0%" style="stop-color:#ffe4c4;stop-opacity:0.2" />
+            <stop offset="70%" style="stop-color:#deb887;stop-opacity:0.1" />
+            <stop offset="100%" style="stop-color:#d2b48c;stop-opacity:0.05" />
           </radialGradient>
           <radialGradient id="muscle3DSelected" cx="30%" cy="30%" r="70%">
             <stop offset="0%" style="stop-color:#00d4aa;stop-opacity:0.3" />
