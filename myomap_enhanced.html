@@ -900,7 +900,60 @@ function selectRegion(name) {
   document.querySelectorAll('.region-btn').forEach(b => b.classList.toggle('selected', b.dataset.region === name));
   document.querySelectorAll('.body-region').forEach(el => el.classList.toggle('selected', el.dataset.region === name));
   document.getElementById('bodyInstruction').textContent = `Selected: ${name} — continue when ready`;
-  document.getElementById('bodyProceedBtn').classList.add('show');
+  // Open modal for questions
+  openModal(name);
+}
+
+function openModal(region) {
+  modalQ = 0;
+  modalAnswers = new Array(questions.length).fill(null);
+  document.getElementById('modalRegionTag').textContent = region;
+  renderModalQuestion();
+  document.getElementById('symptomModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('symptomModal').classList.remove('open');
+}
+
+function renderModalQuestion() {
+  const q = questions[modalQ];
+  document.getElementById('modalProgress').textContent = `Question ${modalQ+1} of ${questions.length}`;
+  document.getElementById('modalQ').textContent = q.text;
+  document.getElementById('modalOpts').innerHTML = q.options.map((o,i) => `
+    <button class="modal-opt ${modalAnswers[modalQ]===i?'chosen':''}" onclick="chooseModalAnswer(${i})">
+      <span class="m-radio"></span>${o.label}
+    </button>`).join('');
+  const btnNext = document.getElementById('modalNext');
+  btnNext.textContent = modalQ < questions.length-1 ? 'Next →' : 'See Results →';
+  btnNext.classList.toggle('enabled', modalAnswers[modalQ] !== null);
+  document.getElementById('modalBack').style.visibility = modalQ === 0 ? 'hidden' : 'visible';
+}
+
+function chooseModalAnswer(i) {
+  modalAnswers[modalQ] = i;
+  document.querySelectorAll('.modal-opt').forEach((el,idx) => el.classList.toggle('chosen', idx===i));
+  document.getElementById('modalNext').classList.add('enabled');
+}
+
+function modalPrev() {
+  if (modalQ > 0) {
+    modalQ--;
+    renderModalQuestion();
+  }
+}
+
+function modalNext() {
+  if (modalAnswers[modalQ] === null) return;
+  if (modalQ < questions.length-1) {
+    modalQ++;
+    renderModalQuestion();
+  } else {
+    // Finish modal and go to results
+    answers = modalAnswers;
+    closeModal();
+    goTo(3);
+  }
 }
 
 // ══════════════ NAVIGATION ══════════════
