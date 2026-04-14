@@ -124,13 +124,27 @@ h1 .line2{color:var(--accent);display:block}
 .body-svg-wrap{position:relative;width:220px}
 .body-svg-wrap svg{width:100%;height:auto}
 .body-region{
-  fill:rgba(255,255,255,0.05);stroke:rgba(255,255,255,0.13);stroke-width:1.5;
-  cursor:pointer;transition:all 0.2s;
+  fill:url(#muscle3D);stroke:rgba(255,255,255,0.2);stroke-width:1;
+  cursor:pointer;transition:all 0.3s;
+  filter:url(#muscleShadow);
 }
-.body-region:hover{fill:rgba(0,136,255,0.18);stroke:rgba(0,136,255,0.55)}
-.body-region.selected{fill:rgba(0,212,170,0.22);stroke:var(--accent);stroke-width:2;filter:drop-shadow(0 0 6px rgba(0,212,170,0.5))}
+.body-region:hover{
+  fill:url(#muscle3D);
+  stroke:rgba(0,136,255,0.4);
+  filter:url(#muscleShadow) brightness(1.1);
+}
+.body-region.selected{
+  fill:url(#muscle3DSelected);
+  stroke:var(--accent);
+  stroke-width:2;
+  filter:url(#muscleGlow);
+}
 .body-region.pulse-anim{animation:regionPulse 0.9s ease-out}
-@keyframes regionPulse{0%{filter:drop-shadow(0 0 0 rgba(0,212,170,0))}50%{filter:drop-shadow(0 0 14px rgba(0,212,170,0.8))}100%{filter:drop-shadow(0 0 6px rgba(0,212,170,0.4))}}
+@keyframes regionPulse{
+  0%{filter:url(#muscleGlow) drop-shadow(0 0 0 rgba(0,212,170,0))}
+  50%{filter:url(#muscleGlow) drop-shadow(0 0 14px rgba(0,212,170,0.8))}
+  100%{filter:url(#muscleGlow) drop-shadow(0 0 6px rgba(0,212,170,0.4))}
+}
 .body-proceed-btn{
   margin-top:1.5rem;padding:11px 26px;border-radius:30px;
   background:var(--accent);color:#001a14;border:none;cursor:pointer;
@@ -481,6 +495,24 @@ h1 .line2{color:var(--accent);display:block}
     <div class="body-instruction" id="bodyInstruction">Tap any region on the body model</div>
     <div class="body-svg-wrap">
       <svg id="bodySVG" viewBox="0 0 200 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="muscle3D" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.15" />
+            <stop offset="70%" style="stop-color:#ffffff;stop-opacity:0.05" />
+            <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.01" />
+          </radialGradient>
+          <radialGradient id="muscle3DSelected" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" style="stop-color:#00d4aa;stop-opacity:0.3" />
+            <stop offset="70%" style="stop-color:#00d4aa;stop-opacity:0.15" />
+            <stop offset="100%" style="stop-color:#00d4aa;stop-opacity:0.05" />
+          </radialGradient>
+          <filter id="muscleShadow">
+            <feDropShadow dx="3" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,0.4)" />
+          </filter>
+          <filter id="muscleGlow">
+            <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="rgba(0,212,170,0.6)" />
+          </filter>
+        </defs>
         <ellipse class="body-region" cx="100" cy="40" rx="30" ry="36" data-region="Head & Neck"/>
         <rect class="body-region" x="25" y="78" width="38" height="28" rx="8" data-region="Left Shoulder"/>
         <rect class="body-region" x="137" y="78" width="38" height="28" rx="8" data-region="Right Shoulder"/>
