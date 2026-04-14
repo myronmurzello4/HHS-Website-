@@ -122,9 +122,10 @@ h1 .line2{color:var(--accent);display:block}
   background:radial-gradient(ellipse 55% 65% at 50% 50%, rgba(0,136,255,0.05) 0%, transparent 70%);
 }
 .body-instruction{font-size:13px;color:var(--muted);margin-bottom:1.5rem;text-align:center}
-.body-3d-wrap{position:relative;width:220px}
+.body-3d-wrap{position:relative;width:220px;height:480px;}
 .body-3d-wrap:hover #body3D{animation:breathe 2s ease-in-out infinite}
-#body3D{width:100%;height:480px;}
+#body3D{width:100%;height:100%;touch-action:none;position:relative;}
+#body3D canvas{width:100%;height:100%;display:block;}
 .body-region{
   fill:url(#muscle3D);stroke:rgba(255,255,255,0.2);stroke-width:1;
   cursor:pointer;transition:all 0.3s;
@@ -902,51 +903,69 @@ init3D();
 // ══════════════ 3D MODEL ══════════════
 function init3D() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(75, 220/480, 0.1, 1000);
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(220, 480);
-  document.getElementById('body3D').appendChild(renderer.domElement);
+  const container = document.getElementById('body3D');
+  const width = container.clientWidth || 220;
+  const height = container.clientHeight || 480;
 
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  renderer.setSize(width, height);
+  renderer.setClearColor(0x080c18, 0);
+  container.appendChild(renderer.domElement);
+
+  scene.background = new THREE.Color(0x080c18);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
   scene.add(ambientLight);
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-  directionalLight.position.set(0, 1, 1);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(2, 4, 3);
   scene.add(directionalLight);
 
-  // Camera position
-  camera.position.set(0, 0, 5);
+  camera.position.set(0, 1.2, 3.5);
+  camera.lookAt(0, 0.75, 0);
 
-  // Load GLB model
   const loader = new THREE.GLTFLoader();
-  loader.load('ecorche_-_anatomy_study.glb', function(gltf) {
+  loader.load('./ecorche_-_anatomy_study.glb', function(gltf) {
     model = gltf.scene;
-    model.scale.set(0.01, 0.01, 0.01); // Adjust scale
-    model.position.set(0, -2, 0); // Adjust position
+    model.scale.set(0.012, 0.012, 0.012);
+    model.position.set(0, -1.1, 0);
+    model.rotation.y = Math.PI;
     scene.add(model);
 
-    // Make all meshes clickable
     model.traverse(function(child) {
       if (child.isMesh) {
         child.material.transparent = true;
-        child.material.opacity = 0.8;
+        child.material.opacity = 0.95;
+        child.material.side = THREE.DoubleSide;
       }
     });
+  }, undefined, function(error) {
+    console.error('3D model load error:', error);
+    container.innerHTML = '<div style="color:#eef2ff;font-size:13px;padding:18px;text-align:center;">Unable to load 3D model. Please run the page from a local web server.</div>';
   });
 
-  // Raycaster for clicks
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
-
-  // Click event
   renderer.domElement.addEventListener('click', on3DClick);
-
-  // Animation loop
+  window.addEventListener('resize', onWindowResize);
   animate();
+}
+
+function onWindowResize() {
+  const container = document.getElementById('body3D');
+  const width = container.clientWidth || 220;
+  const height = container.clientHeight || 480;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
 }
 
 function animate() {
   requestAnimationFrame(animate);
+  if (model) {
+    model.rotation.y += 0.002;
+  }
   renderer.render(scene, camera);
 }
 
@@ -960,41 +979,48 @@ function on3DClick(event) {
 
   if (intersects.length > 0) {
     const clickedObject = intersects[0].object;
-    const region = mapMeshToRegion(clickedObject.name || clickedObject.userData.name);
+    const name = clickedObject.name || clickedObject.userData.name || clickedObject.parent?.name || '';
+    const region = mapMeshToRegion(name);
     if (region) {
       selectRegion(region);
-      // Highlight
-      clickedObject.material.emissive.setHex(0x00d4aa);
-      setTimeout(() => clickedObject.material.emissive.setHex(0x000000), 900);
+      if (clickedObject.material && 'emissive' in clickedObject.material) {
+        clickedObject.material.emissive.setHex(0x00d4aa);
+        setTimeout(() => clickedObject.material.emissive.setHex(0x000000), 900);
+      }
     }
   }
 }
 
 function mapMeshToRegion(meshName) {
-  // Map mesh names to regions
+  const key = (meshName || '').toLowerCase().replace(/[^a-z]/g, '');
   const mapping = {
-    'Head': 'Head & Neck',
-    'Neck': 'Head & Neck',
-    'LeftShoulder': 'Left Shoulder',
-    'RightShoulder': 'Right Shoulder',
-    'Chest': 'Chest',
-    'LeftArm': 'Left Upper Arm',
-    'RightArm': 'Right Upper Arm',
-    'LeftForearm': 'Left Forearm & Wrist',
-    'RightForearm': 'Right Forearm & Wrist',
-    'Abdomen': 'Abdomen / Core',
-    'LowerBack': 'Lower Back',
-    'Hip': 'Hip & Glutes',
-    'LeftThigh': 'Left Thigh',
-    'RightThigh': 'Right Thigh',
-    'LeftCalf': 'Left Calf',
-    'RightCalf': 'Right Calf',
-    'LeftFoot': 'Left Foot & Ankle',
-    'RightFoot': 'Right Foot & Ankle',
-    'LeftHand': 'Left Hand',
-    'RightHand': 'Right Hand'
+    head: 'Head & Neck',
+    neck: 'Head & Neck',
+    headneck: 'Head & Neck',
+    leftshoulder: 'Left Shoulder',
+    rightshoulder: 'Right Shoulder',
+    chest: 'Chest',
+    leftarm: 'Left Upper Arm',
+    rightarm: 'Right Upper Arm',
+    leftupperarm: 'Left Upper Arm',
+    rightupperarm: 'Right Upper Arm',
+    leftforearm: 'Left Forearm & Wrist',
+    rightforearm: 'Right Forearm & Wrist',
+    abdomen: 'Abdomen / Core',
+    core: 'Abdomen / Core',
+    lowerback: 'Lower Back',
+    hip: 'Hip & Glutes',
+    glutes: 'Hip & Glutes',
+    leftthigh: 'Left Thigh',
+    rightthigh: 'Right Thigh',
+    leftcalf: 'Left Calf',
+    rightcalf: 'Right Calf',
+    leftfoot: 'Left Foot & Ankle',
+    rightfoot: 'Right Foot & Ankle',
+    lefthand: 'Left Hand',
+    righthand: 'Right Hand'
   };
-  return mapping[meshName] || null;
+  return mapping[key] || null;
 }
 
 // ══════════════ REGION SELECT ══════════════
