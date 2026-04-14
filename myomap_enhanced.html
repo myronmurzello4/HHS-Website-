@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MyoMap — Muscle Health Navigator</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <style>
 :root {
   --bg: #080c18;
@@ -121,9 +122,9 @@ h1 .line2{color:var(--accent);display:block}
   background:radial-gradient(ellipse 55% 65% at 50% 50%, rgba(0,136,255,0.05) 0%, transparent 70%);
 }
 .body-instruction{font-size:13px;color:var(--muted);margin-bottom:1.5rem;text-align:center}
-.body-svg-wrap{position:relative;width:220px}
-.body-svg-wrap:hover svg{animation:breathe 2s ease-in-out infinite}
-.body-svg-wrap svg{width:100%;height:auto}
+.body-3d-wrap{position:relative;width:220px}
+.body-3d-wrap:hover #body3D{animation:breathe 2s ease-in-out infinite}
+#body3D{width:100%;height:480px;}
 .body-region{
   fill:url(#muscle3D);stroke:rgba(255,255,255,0.2);stroke-width:1;
   cursor:pointer;transition:all 0.3s;
@@ -498,47 +499,8 @@ h1 .line2{color:var(--accent);display:block}
   </div>
   <div class="body-right">
     <div class="body-instruction" id="bodyInstruction">Tap any region on the body model</div>
-    <div class="body-svg-wrap">
-      <svg id="bodySVG" viewBox="0 0 200 480" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="muscle3D" cx="30%" cy="30%" r="70%">
-            <stop offset="0%" style="stop-color:#ffe4c4;stop-opacity:0.2" />
-            <stop offset="70%" style="stop-color:#deb887;stop-opacity:0.1" />
-            <stop offset="100%" style="stop-color:#d2b48c;stop-opacity:0.05" />
-          </radialGradient>
-          <radialGradient id="muscle3DSelected" cx="30%" cy="30%" r="70%">
-            <stop offset="0%" style="stop-color:#00d4aa;stop-opacity:0.3" />
-            <stop offset="70%" style="stop-color:#00d4aa;stop-opacity:0.15" />
-            <stop offset="100%" style="stop-color:#00d4aa;stop-opacity:0.05" />
-          </radialGradient>
-          <filter id="muscleShadow">
-            <feDropShadow dx="3" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,0.4)" />
-          </filter>
-          <filter id="muscleGlow">
-            <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="rgba(0,212,170,0.6)" />
-          </filter>
-        </defs>
-        <ellipse class="body-region" cx="100" cy="40" rx="30" ry="36" data-region="Head & Neck"/>
-        <rect class="body-region" x="25" y="78" width="38" height="28" rx="8" data-region="Left Shoulder"/>
-        <rect class="body-region" x="137" y="78" width="38" height="28" rx="8" data-region="Right Shoulder"/>
-        <rect class="body-region" x="63" y="108" width="74" height="42" rx="6" data-region="Chest"/>
-        <rect class="body-region" x="14" y="108" width="30" height="56" rx="8" data-region="Left Upper Arm"/>
-        <rect class="body-region" x="156" y="108" width="30" height="56" rx="8" data-region="Right Upper Arm"/>
-        <rect class="body-region" x="63" y="152" width="74" height="34" rx="6" data-region="Abdomen / Core"/>
-        <rect class="body-region" x="10" y="168" width="26" height="52" rx="8" data-region="Left Forearm & Wrist"/>
-        <rect class="body-region" x="164" y="168" width="26" height="52" rx="8" data-region="Right Forearm & Wrist"/>
-        <rect class="body-region" x="63" y="186" width="74" height="44" rx="6" data-region="Lower Back"/>
-        <rect class="body-region" x="63" y="232" width="74" height="36" rx="8" data-region="Hip & Glutes"/>
-        <ellipse class="body-region" cx="27" cy="242" rx="16" ry="16" data-region="Left Hand"/>
-        <ellipse class="body-region" cx="173" cy="242" rx="16" ry="16" data-region="Right Hand"/>
-        <rect class="body-region" x="55" y="270" width="40" height="72" rx="10" data-region="Left Thigh"/>
-        <rect class="body-region" x="105" y="270" width="40" height="72" rx="10" data-region="Right Thigh"/>
-        <rect class="body-region" x="57" y="346" width="36" height="68" rx="10" data-region="Left Calf"/>
-        <rect class="body-region" x="107" y="346" width="36" height="68" rx="10" data-region="Right Calf"/>
-        <ellipse class="body-region" cx="73" cy="430" rx="22" ry="16" data-region="Left Foot & Ankle"/>
-        <ellipse class="body-region" cx="127" cy="430" rx="22" ry="16" data-region="Right Foot & Ankle"/>
-        <line x1="100" y1="78" x2="100" y2="230" stroke="rgba(255,255,255,0.05)" stroke-width="3" stroke-dasharray="4,4"/>
-      </svg>
+    <div class="body-3d-wrap">
+      <div id="body3D"></div>
     </div>
     <button class="body-proceed-btn" id="bodyProceedBtn" onclick="goTo(2)">Continue with selected region →</button>
   </div>
@@ -899,6 +861,9 @@ let modalAnswers = [];
 let painLog = JSON.parse(localStorage.getItem('myomap_painlog') || '[]');
 let painChart = null;
 
+// 3D Model
+let scene, camera, renderer, model, raycaster, mouse;
+
 // ══════════════ INIT ══════════════
 // Region list
 const regionList = document.getElementById('regionList');
@@ -912,13 +877,13 @@ regions.forEach(r => {
 });
 
 // Body SVG clicks
-document.querySelectorAll('.body-region').forEach(el => {
-  el.addEventListener('click', () => {
-    selectRegion(el.dataset.region);
-    el.classList.add('pulse-anim');
-    setTimeout(() => el.classList.remove('pulse-anim'), 900);
-  });
-});
+// document.querySelectorAll('.body-region').forEach(el => {
+//   el.addEventListener('click', () => {
+//     selectRegion(el.dataset.region);
+//     el.classList.add('pulse-anim');
+//     setTimeout(() => el.classList.remove('pulse-anim'), 900);
+//   });
+// });
 
 // Pain log region select
 const logRegionSel = document.getElementById('logRegion');
@@ -931,11 +896,112 @@ regions.forEach(r => {
 // Default date to today
 document.getElementById('logDate').valueAsDate = new Date();
 
+// Init 3D Model
+init3D();
+
+// ══════════════ 3D MODEL ══════════════
+function init3D() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, 220/480, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(220, 480);
+  document.getElementById('body3D').appendChild(renderer.domElement);
+
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  directionalLight.position.set(0, 1, 1);
+  scene.add(directionalLight);
+
+  // Camera position
+  camera.position.set(0, 0, 5);
+
+  // Load GLB model
+  const loader = new THREE.GLTFLoader();
+  loader.load('ecorche_-_anatomy_study.glb', function(gltf) {
+    model = gltf.scene;
+    model.scale.set(0.01, 0.01, 0.01); // Adjust scale
+    model.position.set(0, -2, 0); // Adjust position
+    scene.add(model);
+
+    // Make all meshes clickable
+    model.traverse(function(child) {
+      if (child.isMesh) {
+        child.material.transparent = true;
+        child.material.opacity = 0.8;
+      }
+    });
+  });
+
+  // Raycaster for clicks
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  // Click event
+  renderer.domElement.addEventListener('click', on3DClick);
+
+  // Animation loop
+  animate();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+function on3DClick(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    const clickedObject = intersects[0].object;
+    const region = mapMeshToRegion(clickedObject.name || clickedObject.userData.name);
+    if (region) {
+      selectRegion(region);
+      // Highlight
+      clickedObject.material.emissive.setHex(0x00d4aa);
+      setTimeout(() => clickedObject.material.emissive.setHex(0x000000), 900);
+    }
+  }
+}
+
+function mapMeshToRegion(meshName) {
+  // Map mesh names to regions
+  const mapping = {
+    'Head': 'Head & Neck',
+    'Neck': 'Head & Neck',
+    'LeftShoulder': 'Left Shoulder',
+    'RightShoulder': 'Right Shoulder',
+    'Chest': 'Chest',
+    'LeftArm': 'Left Upper Arm',
+    'RightArm': 'Right Upper Arm',
+    'LeftForearm': 'Left Forearm & Wrist',
+    'RightForearm': 'Right Forearm & Wrist',
+    'Abdomen': 'Abdomen / Core',
+    'LowerBack': 'Lower Back',
+    'Hip': 'Hip & Glutes',
+    'LeftThigh': 'Left Thigh',
+    'RightThigh': 'Right Thigh',
+    'LeftCalf': 'Left Calf',
+    'RightCalf': 'Right Calf',
+    'LeftFoot': 'Left Foot & Ankle',
+    'RightFoot': 'Right Foot & Ankle',
+    'LeftHand': 'Left Hand',
+    'RightHand': 'Right Hand'
+  };
+  return mapping[meshName] || null;
+}
+
 // ══════════════ REGION SELECT ══════════════
 function selectRegion(name) {
   selectedRegion = name;
   document.querySelectorAll('.region-btn').forEach(b => b.classList.toggle('selected', b.dataset.region === name));
-  document.querySelectorAll('.body-region').forEach(el => el.classList.toggle('selected', el.dataset.region === name));
+  // document.querySelectorAll('.body-region').forEach(el => el.classList.toggle('selected', el.dataset.region === name));
   document.getElementById('bodyInstruction').textContent = `Selected: ${name} — continue when ready`;
   // Open modal for questions
   openModal(name);
